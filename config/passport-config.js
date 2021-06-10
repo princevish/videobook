@@ -25,6 +25,7 @@ passport.use(new LocalStrategy({
             if (user){
                const hashpass= await bcrypt.compare(password,user.password)
                if(hashpass){
+                  
                    return done(null, user); 
                }else{
                 return done(null, false, { message: 'Password incorrect' });
@@ -43,6 +44,7 @@ passport.use(new LocalStrategy({
 
 // serializing the user to decide which key is to be kept in the cookies
 passport.serializeUser(function(user, done){
+    console.log(user.id)
     done(null, user.id);
 });
 
@@ -59,6 +61,18 @@ passport.deserializeUser(function(id, done){
         return done(null, user);
     });
 });
+
+// check if the user is authenticated
+
+
+passport.setAuthenticatedUser = function(req, res, next){
+    if (req.isAuthenticated()){
+        // req.user contains the current signed in user from the session cookie and we are just sending this to the locals for the views
+        res.locals.user = req.user;
+    }
+
+    next();
+}
 
 
 module.exports = passport

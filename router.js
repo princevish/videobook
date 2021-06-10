@@ -6,14 +6,19 @@ const bcrypt = require('bcrypt');
 const passport = require('passport');
 const User = require('./model/user');
 const Video = require('./model/video');
-const { forwardAuthenticated,ensureAuthenticated } = require('./config/auth');
+const {
+  forwardAuthenticated,
+  ensureAuthenticated
+} = require('./config/auth');
 router.get('/', (req, res, next) => {
+  console.log(res.locals.user)
+  
   Video.find({}, async function (err, data) {
     if (err) {
       console.log(err)
     }
 
-    console.log(req.isAuthenticated())
+
     res.render("index.ejs", {
       video: data
     });
@@ -22,11 +27,12 @@ router.get('/', (req, res, next) => {
 
 
 });
-router.get('/upload',(req, res)=>{
+router.get('/upload', ensureAuthenticated, (req, res) => {
+  
   res.render('upload');
 })
 
-router.post('/upload',ensureAuthenticated, (req, res, next) => {
+router.post('/upload', ensureAuthenticated, (req, res, next) => {
 
 
   upload(req, res, function (err) {
@@ -53,18 +59,18 @@ router.post('/upload',ensureAuthenticated, (req, res, next) => {
 
 });
 
-router.get('/login',forwardAuthenticated,(req, res)=>{
+router.get('/login', forwardAuthenticated, (req, res) => {
   res.render('login');
 })
 
 
-router.post('/login',  passport.authenticate('local', {
+router.post('/login', passport.authenticate('local', {
   successRedirect: '/',
   failureRedirect: '/login',
   failureFlash: true
 }));
 
-router.get('/register',forwardAuthenticated,(req, res)=>{
+router.get('/register', forwardAuthenticated, (req, res) => {
   res.render('register');
 })
 
@@ -83,7 +89,7 @@ router.post('/register', (req, res) => {
       });
     }
 
-   
+
 
     if (password.length < 6) {
       errors.push({
@@ -92,12 +98,14 @@ router.post('/register', (req, res) => {
     }
 
     if (errors.length > 0) {
-     return res.render('register', {
-       errors
-       
+      return res.render('register', {
+        errors
+
       });
     }
-    User.findOne({email}, async function (err, user) {
+    User.findOne({
+      email
+    }, async function (err, user) {
       if (err) {
         console.log(err)
       }
@@ -110,7 +118,7 @@ router.post('/register', (req, res) => {
           email,
           password: hashedPassword
         })
-        req.session.name = user.id
+
         res.redirect('/')
       } else {
         errors.push({
@@ -128,7 +136,7 @@ router.post('/register', (req, res) => {
   }
 })
 
-router.get('/logout',ensureAuthenticated, (req, res) => {
+router.get('/logout', ensureAuthenticated, (req, res) => {
   req.logOut()
   res.redirect('/login')
 })
