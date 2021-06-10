@@ -4,54 +4,71 @@ const upload = require('./upload')
 const multer = require('multer')
 const bcrypt = require('bcrypt');
 const passport = require('passport');
-const User = require('./model/user');
-const Video = require('./model/video');
+const {
+  User,
+  Video
+} = require('./model/model');
+
 const {
   forwardAuthenticated,
   ensureAuthenticated
 } = require('./config/auth');
+
+
+// main home 
 router.get('/', (req, res, next) => {
-  console.log(res.locals.user)
-  
+
+
   Video.find({}, async function (err, data) {
     if (err) {
       console.log(err)
     }
-
-
     res.render("index.ejs", {
       video: data
     });
 
   });
 
-
 });
+
+// login page
+router.get('/login', forwardAuthenticated, (req, res) => {
+  res.render('login');
+})
+
+ // register page
+ router.get('/register', forwardAuthenticated, (req, res) => {
+  res.render('register');
+})
+
+
+// upload page
 router.get('/upload', ensureAuthenticated, (req, res) => {
-  
+
   res.render('upload');
 })
 
+
+// upload route
 router.post('/upload', ensureAuthenticated, (req, res, next) => {
-
-
   upload(req, res, function (err) {
     if (err instanceof multer.MulterError) {
       // A Multer error occurred when uploading.
-      return res.status(401).json({
-        "data": err
-      })
+      return res.render('upload', {
+        errors: err
+      });
     } else if (err) {
       // An unknown error occurred when uploading.
-      return res.status(403).json({
-        "data": err
-      })
+      return res.render('upload', {
+        errors: err
+      });
     }
 
     const video = new Video({
       name: req.body.name,
       discription: req.body.discription,
-      video: `video/${req.file.filename}`
+      video: `video/${req.file.filename}`,
+      user: req.user
     });
     video.save()
     return res.redirect('/')
@@ -59,21 +76,14 @@ router.post('/upload', ensureAuthenticated, (req, res, next) => {
 
 });
 
-router.get('/login', forwardAuthenticated, (req, res) => {
-  res.render('login');
-})
-
-
+// login route
 router.post('/login', passport.authenticate('local', {
   successRedirect: '/',
   failureRedirect: '/login',
   failureFlash: true
 }));
 
-router.get('/register', forwardAuthenticated, (req, res) => {
-  res.render('register');
-})
-
+// register route
 router.post('/register', (req, res) => {
   try {
 
@@ -88,9 +98,6 @@ router.post('/register', (req, res) => {
         msg: 'Please enter all fields'
       });
     }
-
-
-
     if (password.length < 6) {
       errors.push({
         msg: 'Password must be at least 6 characters'
@@ -136,6 +143,8 @@ router.post('/register', (req, res) => {
   }
 })
 
+
+//logout route
 router.get('/logout', ensureAuthenticated, (req, res) => {
   req.logOut()
   res.redirect('/login')

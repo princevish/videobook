@@ -13,7 +13,8 @@ require('./config/passport-config')
 // DB Config
 const db = require('./config/db')
 
-// Connect to MongoDB
+// Express static
+app.use('/video',express.static('uploads'))
 
 
 // EJS

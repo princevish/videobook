@@ -2,7 +2,7 @@ const passport = require('passport');
 
 const LocalStrategy = require('passport-local').Strategy;
 const bcrypt = require('bcrypt');
-const User = require('../model/user');
+const User = require('../model/model');
 
 
 // authentication using passport
@@ -44,7 +44,7 @@ passport.use(new LocalStrategy({
 
 // serializing the user to decide which key is to be kept in the cookies
 passport.serializeUser(function(user, done){
-    console.log(user.id)
+   
     done(null, user.id);
 });
 
