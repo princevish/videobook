@@ -1,0 +1,31 @@
+
+     <% if(video.length===0){ %>
+      <center class="p-5"><h1>Video Not Found</h1></center>
+
+     <% } else { %>
+      <!-- video -->
+      <div class="row">
+      
+        <div class="row row-cols-1 row-cols-md-3 g-4 m-0">
+          <% video.forEach(function(data){ %>
+          <div class="col">
+            <div class="card">
+              
+             
+              <video class="video-fluid z-depth-1"  preload controls >
+                <source src="<%= data.video %>" type="video/mp4" />
+              </video>
+              <div class="card-body">
+                <h5 class="card-title"> <%= data.name %></h5>
+                <p class="card-text"> <%= data.discription %></p>
+              </div>
+            </div>
+           
+          </div>
+          <% }) %>
+        </div>
+          
+        </div>
+      </div>
+  
+  <%  } %>
