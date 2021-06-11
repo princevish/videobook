@@ -17,8 +17,6 @@ const {
 
 // main home 
 router.get('/', (req, res, next) => {
-
-
   Video.find({}, async function (err, data) {
     if (err) {
       console.log(err)
@@ -84,7 +82,7 @@ router.post('/login', passport.authenticate('local', {
 }));
 
 // register route
-router.post('/register', (req, res) => {
+router.post('/register',forwardAuthenticated, (req, res) => {
   try {
 
     const {
@@ -116,7 +114,7 @@ router.post('/register', (req, res) => {
       if (err) {
         console.log(err)
       }
-      console.log(user)
+   
       if (!user) {
         const hashedPassword = await bcrypt.hash(password, 10)
 
@@ -126,7 +124,7 @@ router.post('/register', (req, res) => {
           password: hashedPassword
         })
 
-        res.redirect('/')
+        res.redirect('/login')
       } else {
         errors.push({
           msg: 'user allready Exist'
