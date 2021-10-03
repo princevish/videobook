@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-mongoose.connect(`mongodb://localhost/videobook`, {
+mongoose.connect(process.env.MB, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     useCreateIndex: true

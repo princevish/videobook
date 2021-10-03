@@ -4,6 +4,7 @@ const upload = require('./upload')
 const multer = require('multer')
 const bcrypt = require('bcrypt');
 const passport = require('passport');
+const fs = require("fs");
 const {
   User,
   Video
@@ -34,8 +35,8 @@ router.get('/login', forwardAuthenticated, (req, res) => {
   res.render('login');
 })
 
- // register page
- router.get('/register', forwardAuthenticated, (req, res) => {
+// register page
+router.get('/register', forwardAuthenticated, (req, res) => {
   res.render('register');
 })
 
@@ -65,7 +66,7 @@ router.post('/upload', ensureAuthenticated, (req, res, next) => {
     const video = new Video({
       name: req.body.name,
       discription: req.body.discription,
-      video: `video/${req.file.filename}`,
+      video: `${req.file.filename}`,
       user: req.user
     });
     video.save()
@@ -82,7 +83,7 @@ router.post('/login', passport.authenticate('local', {
 }));
 
 // register route
-router.post('/register',forwardAuthenticated, (req, res) => {
+router.post('/register', forwardAuthenticated, (req, res) => {
   try {
 
     const {
@@ -114,7 +115,7 @@ router.post('/register',forwardAuthenticated, (req, res) => {
       if (err) {
         console.log(err)
       }
-   
+
       if (!user) {
         const hashedPassword = await bcrypt.hash(password, 10)
 
@@ -141,12 +142,59 @@ router.post('/register',forwardAuthenticated, (req, res) => {
   }
 })
 
-
 //logout route
 router.get('/logout', ensureAuthenticated, (req, res) => {
   req.logOut()
   res.redirect('/login')
 })
+
+router.get("/video", function (req, res) {
+  // Ensure there is a range given for the video
+  let {
+    src
+  } = req.query;
+  const range = req.headers.range;
+  if (!range) {
+    res.status(400).send("Requires Range header");
+  }
+
+  // get video stats (about 61MB)
+
+  try {
+    var videoPath = `uploads/${src}`;
+    var videoSize = fs.statSync(`uploads/${src}`).size;
+  } catch (err) {
+    var videoPath = `uploads/notfound.mp4`;
+    var videoSize = fs.statSync(`uploads/notfound.mp4`).size;
+  }
+  // Parse Range
+  // Example: "bytes=32324-"
+  const CHUNK_SIZE = 10 ** 6; // 1MB
+  const start = Number(range.replace(/\D/g, ""));
+  const end = Math.min(start + CHUNK_SIZE, videoSize - 1);
+
+  // Create headers
+  const contentLength = end - start + 1;
+  const headers = {
+    "Content-Range": `bytes ${start}-${end}/${videoSize}`,
+    "Accept-Ranges": "bytes",
+    "Content-Length": contentLength,
+    "Content-Type": "video/mp4",
+  };
+
+  // HTTP Status 206 for Partial Content
+  res.writeHead(206, headers);
+
+  // create video read stream for this particular chunk
+  const videoStream = fs.createReadStream(videoPath, {
+    start,
+    end
+  });
+
+  // Stream the video chunk to the client
+  videoStream.pipe(res);
+
+});
 
 
 module.exports = router;
